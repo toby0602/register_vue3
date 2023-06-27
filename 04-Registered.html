@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>registered</title>
+  <link rel="stylesheet" href="./css/main.css" />
+  <link rel="stylesheet" href="./css/04-registered.css" />
+</head>
+
+<body>
+  <div id="app">
+    <div v-if="!isreg">
+      <div class="input-box">
+        <p>NAME</p>
+        <input type="text" placeholder="輸入使用者名稱" v-model="registered.username" />
+        <p class="error" v-if="error_message.username">{{error_message.username}}</p>
+        <!-- 顯示在畫面上，error的時候 -->
+      </div>
+      <div class="input-box">
+        <p>PASSWORD</p>
+        <input type="password" placeholder="輸入密碼" v-model="registered.password" />
+        <p class="error" v-if="error_message.password">{{error_message.password}}</p>
+      </div>
+      <div class="input-box">
+        <p>E-MAIL</p>
+        <input type="text" placeholder="輸入email" v-model="registered.email" />
+        <p class="error" v-if="error_message.email">{{error_message.email}}</p>
+      </div>
+      <div class="input-box">
+        <p>年齡</p>
+        <input type="number" placeholder="輸入年齡" v-model="registered.age" />
+      </div>
+      <div class="input-box">
+        <input type="radio" id="boy" value="boy" v-model="registered.sex" />
+        <label for="boy">boy</label>
+        <input type="radio" id="girl" value="girl" v-model="registered.sex" />
+        <label for="girl">girl</label>
+      </div>
+      <div class="input-box">
+        <input type="checkbox" id="checkbox" v-model="registered.terms" />
+        <label for="checkbox">我已閱讀使用者條款</label>
+      </div>
+      <a class="btn" @click="handSubmit">送出</a>
+    </div>
+    <div v-if="isreg">
+      <h1>註冊成功</h1>
+    </div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.20.0/axios.min.js"></script>
+  <script src="./js/vue.js"></script>
+  <!-- 
+      {
+        username: 'mike',
+        password: '123456789',
+        sex: 'boy',
+        email: 'qwer@gmail.com',
+        age: '12'
+        terms: false,
+      }
+  -->
+
+  <script>
+    const { reactive, ref, watch } = Vue;
+    const app = {
+      setup() {
+        const isreg = ref(false);
+        const registered = reactive({
+          username: "",
+          password: "",
+          sex: "",
+          email: "",
+          age: "",
+          terms: false,
+        });
+
+        const error_message = reactive({});
+
+        const handError = (err) => {
+          Object.keys(err).forEach((error) => (error_message[error] = err[error]));
+        };
+
+        const validateForm = () => {
+          // 清空錯誤消息
+          Object.keys(error_message).forEach((key) => (error_message[key] = ""));
+
+          // 進行表單驗證
+          let isValid = true;
+
+          if (!registered.username) {
+            error_message.username = "請輸入用户名";
+            isValid = false;
+          }
+          if (!registered.password) {
+            error_message.password = "請輸入密码";
+            isValid = false;
+          }
+          if (!registered.email) {
+            error_message.email = "請輸入電子郵件";
+            isValid = false;
+          }
+
+
+          // 返回表單驗證结果
+          return isValid;
+        };
+
+        const handSubmit = () => {
+          if (validateForm()) {
+            axios
+              .post(
+                "https://vue-lessons-api.vercel.app/auth/registered",
+                registered
+              )
+              .then((response) => {
+                isreg.value = true;
+                console.log(response);
+              })
+              .catch((error) => {
+                handError(error.response.data.error_message);
+                console.log(error.response.data.error_message);
+              });
+          }
+        };
+
+        return { registered, isreg, handSubmit, error_message };
+      },
+    };
+
+    Vue.createApp(app).mount("#app");
+  </script>
+
+</body>
+<!-- 
+  這種作法需跟後端討論error_message傳回來的格式，
+  因為這裡傳回來的格式是一個物件，所以你才可以在畫面上用這種方式做error訊息的顯示。
+  如果不是用這種方式，或許可以用alert，或是其他顯示方式來告訴使用者哪邊做錯的error訊息。
+-->
+
+</html>
